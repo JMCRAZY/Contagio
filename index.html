@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Encargo #24 · Contagio: Frena el Brote</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;800;900&family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg: #070a12;
+      --panel: #0f172a;
+      --panel-hover: #1e293b;
+      --panel-border: #1e293b;
+      --border-glow: #0284c7;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      
+      --sano: #38bdf8;
+      --sano-bg: rgba(56, 189, 248, 0.12);
+      --contagiado: #ef4444;
+      --contagiado-bg: rgba(239, 68, 68, 0.22);
+      --aislado: #f59e0b;
+      --aislado-bg: rgba(245, 158, 11, 0.18);
+      --recuperado: #a855f7;
+      --recuperado-bg: rgba(168, 85, 247, 0.18);
+      
+      --accent: #22d3ee;
+      --danger: #f43f5e;
+      --success: #10b981;
+      --warning: #f59e0b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Rajdhani', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px;
+      line-height: 1.4;
+      overflow-x: hidden;
+    }
+
+    header {
+      width: 100%;
+      max-width: 680px;
+      text-align: center;
+      margin-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 10px;
+    }
+
+    .badge-encargo {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      background: rgba(34, 211, 238, 0.1);
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: 3px 12px;
+      border-radius: 99px;
+      margin-bottom: 6px;
+      letter-spacing: 1px;
+      box-shadow: 0 0 10px rgba(34, 211, 238, 0.2);
+    }
+
+    h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(22px, 5vw, 28px);
+      font-weight: 900;
+      background: linear-gradient(90deg, #22d3ee, #f43f5e);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 6px;
+      width: 100%;
+      max-width: 680px;
+      margin-bottom: 14px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      min-height: 44px;
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      color: var(--text-muted);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .tab-btn:hover {
+      border-color: rgba(34, 211, 238, 0.4);
+      color: #fff;
+    }
+
+    .tab-btn.active {
+      background: rgba(34, 211, 238, 0.15);
+      border-color: var(--accent);
+      color: var(--accent);
+      box-shadow: 0 0 12px rgba(34, 211, 238, 0.25);
+    }
+
+    .container {
+      width: 100%;
+      max-width: 680px;
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .hud {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .hud-card {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      padding: 8px 6px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hud-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--text-muted);
+      opacity: 0.3;
+    }
+
+    .hud-card.active-card::before { background: var(--accent); opacity: 1; }
+    .hud-card.danger-card::before { background: var(--danger); opacity: 1; }
+    .hud-card.warning-card::before { background: var(--warning); opacity: 1; }
+
+    .hud-title {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+
+    .hud-value {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--accent);
+    }
+
+    .hud-value.danger { color: var(--danger); }
+    .hud-value.warning { color: var(--warning); }
+    .hud-value.success { color: var(--success); }
+
+    .grid-container {
+      background: #020617;
+      border: 2px solid var(--panel-border);
+      border-radius: 12px;
+      padding: 10px;
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 8px;
+      aspect-ratio: 1 / 1;
+      margin-bottom: 14px;
+      box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(0, 0, 0, 0.5);
+    }
+
+    .cell {
+      min-width: 44px;
+      min-height: 44px;
+      border-radius: 8px;
+      border: 2px solid transparent;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cell:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    }
+
+    .cell:active { transform: scale(0.92); }
+
+    .cell.sana {
+      background: var(--sano-bg);
+      border-color: var(--sano);
+      color: var(--sano);
+    }
+
+    .cell.sana:hover {
+      background: rgba(56, 189, 248, 0.25);
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
+    }
+
+    .cell.contagiada {
+      background: var(--contagiado-bg);
+      border-color: var(--contagiado);
+      color: var(--contagiado);
+      animation: pulse-red 1.2s infinite alternate;
+    }
+
+    .cell.aislada {
+      background: var(--aislado-bg);
+      border-color: var(--aislado);
+      color: var(--aislado);
+    }
+
+    .cell.recuperada {
+      background: var(--recuperado-bg);
+      border-color: var(--recuperado);
+      color: var(--recuperado);
+    }
+
+    @keyframes pulse-red {
+      0% { box-shadow: 0 0 4px rgba(239, 68, 68, 0.3); }
+      100% { box-shadow: 0 0 18px rgba(239, 68, 68, 0.8); }
+    }
+
+    .cell-icon {
+      font-size: 18px;
+      margin-bottom: 2px;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .btn {
+      min-height: 48px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .btn:active { transform: translateY(1px); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      color: #fff;
+      border-color: #38bdf8;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 0 18px rgba(56, 189, 248, 0.5);
+    }
+
+    .btn-warning {
+      background: linear-gradient(135deg, #d97706, #b45309);
+      color: #fff;
+      border-color: #fbbf24;
+    }
+
+    .btn-warning:hover {
+      box-shadow: 0 0 14px rgba(251, 191, 36, 0.4);
+    }
+
+    .btn-warning:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      box-shadow: none;
+      filter: grayscale(0.8);
+    }
+
+    .btn-full { grid-column: span 2; }
+
+    .banner {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12.5px;
+      display: none;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .banner.show { display: flex; }
+    .banner.info { background: rgba(34, 211, 238, 0.1); border: 1px solid var(--accent); color: var(--accent); }
+    .banner.error { background: rgba(239, 68, 68, 0.15); border: 1px solid var(--danger); color: #fca5a5; }
+    .banner.success { background: rgba(16, 185, 129, 0.15); border: 1px solid var(--success); color: #6ee7b7; }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+
+    .card h2 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 15px;
+      color: var(--accent);
+      margin-bottom: 12px;
+      border-bottom: 1px solid var(--panel-border);
+      padding-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .field { margin-bottom: 12px; }
+    .field-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--accent);
+      text-transform: uppercase;
+      margin-bottom: 3px;
+    }
+    .field-val {
+      font-size: 14px;
+      color: var(--text);
+      background: rgba(2, 6, 23, 0.6);
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--panel-border);
+    }
+
+    .test-item {
+      padding: 12px;
+      border-radius: 8px;
+      background: rgba(2, 6, 23, 0.6);
+      border: 1px solid var(--panel-border);
+      margin-bottom: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+    }
+
+    .test-item.pass { border-left: 4px solid var(--success); }
+    .test-item.fail { border-left: 4px solid var(--danger); }
+
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--warning);
+      background: rgba(251, 191, 36, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    ol.commits-list {
+      padding-left: 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+    }
+
+    ol.commits-list li { margin-bottom: 12px; }
+    ol.commits-list code { color: var(--success); font-weight: bold; }
+
+    .btn-copy {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--panel-border);
+      color: var(--text-muted);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      cursor: pointer;
+      margin-left: 8px;
+      transition: all 0.2s ease;
+    }
+    .btn-copy:hover { color: #fff; background: rgba(255, 255, 255, 0.15); }
+
+    /* Sound toggle button */
+    .sound-toggle {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      color: var(--accent);
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <button class="sound-toggle" id="sound-btn" title="Activar/Desactivar Sonido" onclick="toggleAudio()">🔊</button>
+    <span class="badge-encargo">⚡ ENCARGO #24 · ESTUDIANTE 3DS-A</span>
+    <h1>Contagio: Frena el Brote</h1>
+  </header>
+
+  <div class="nav-tabs">
+    <button class="tab-btn active" id="tab-btn-juego" onclick="switchTab('juego')">🎮 JUEGO</button>
+    <button class="tab-btn" id="tab-btn-pruebas" onclick="switchTab('pruebas')">🧪 PRUEBAS</button>
+    <button class="tab-btn" id="tab-btn-ficha" onclick="switchTab('ficha')">📄 FICHA</button>
+    <button class="tab-btn" id="tab-btn-commits" onclick="switchTab('commits')">📌 COMMITS</button>
+  </div>
+
+  <div class="container">
+    <div id="tab-juego" class="tab-content active">
+      <div id="status-banner" class="banner info show">
+        💡 Tocá a personas <b>Sanas (👤)</b> para aislarlas antes de que se propague el virus.
+      </div>
+
+      <div class="hud">
+        <div class="hud-card active-card">
+          <div class="hud-title">DÍA</div>
+          <div class="hud-value" id="hud-dia">1</div>
+        </div>
+        <div class="hud-card danger-card">
+          <div class="hud-title">ACTIVAS</div>
+          <div class="hud-value danger" id="hud-activas">1</div>
+        </div>
+        <div class="hud-card warning-card">
+          <div class="hud-title">HISTÓRICO</div>
+          <div class="hud-value warning" id="hud-historico">1/14</div>
+        </div>
+        <div class="hud-card">
+          <div class="hud-title">AISLANTES</div>
+          <div class="hud-value" id="hud-aislamientos">5</div>
+        </div>
+      </div>
+
+      <!-- Grid 6x6 -->
+      <div class="grid-container" id="grid"></div>
+
+      <!-- Action Buttons -->
+      <div class="controls">
+        <button class="btn btn-warning" id="btn-medidas" onclick="handleActivarMedidas()">
+          🛡️ Medidas Sanitarias (3 días)
+        </button>
+        <button class="btn btn-primary" id="btn-siguiente" onclick="handleSiguienteDia()">
+          ⏩ Siguiente Día
+        </button>
+        <button class="btn btn-full" style="background:var(--panel); border-color:var(--panel-border); color:var(--text);" onclick="reiniciarJuego()">
+          🔄 Reiniciar Partida
+        </button>
+      </div>
+    </div>
+
+    <div id="tab-pruebas" class="tab-content">
+      <div class="card">
+        <h2>🧪 Probador de Unit Tests (Vitest)</h2>
+        <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 14px;">
+          Simulación en tiempo real de la suite de pruebas unitarias contenidas en <code>test/logica.test.ts</code> verificando el comportamiento puro de <code>src/logica.ts</code>.
+        </p>
+        <button class="btn btn-primary" style="margin-bottom: 14px;" onclick="runUnitTests()">▶️ Ejecutar Suite de Tests</button>
+        <div id="tests-output"></div>
+      </div>
+    </div>
+
+    <div id="tab-ficha" class="tab-content">
+      <div class="card">
+        <h2>📄 Plantilla de Ficha (Encargo #24)</h2>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
+          Datos oficiales para transcribir a la ficha impresa antes de la revisión con el docente.
+        </p>
+
+        <div class="field">
+          <div class="field-label">NOMBRE DEL PROYECTO</div>
+          <div class="field-val">Contagio: Frena el brote</div>
+        </div>
+        <div class="field">
+          <div class="field-label">EN UNA FRASE</div>
+          <div class="field-val">Simulador táctico para aislar personas sanas y contener una epidemia en una comunidad de 36 habitantes.</div>
+        </div>
+        <div class="field">
+          <div class="field-label">PARA QUIÉN ES</div>
+          <div class="field-val">Para un estudiante o visitante de feria que quiera entender cómo las medidas a tiempo frenan un contagio.</div>
+        </div>
+        <div class="field">
+          <div class="field-label">QUÉ LOGRA</div>
+          <div class="field-val">Erradicar los contagios activos antes de que se infecten 14 o más personas.</div>
+        </div>
+        <div class="field">
+          <div class="field-label">LOS TRES VERBOS</div>
+          <div class="field-val">1. Aislar &nbsp;|&nbsp; 2. Activar medidas &nbsp;|&nbsp; 3. Avanzar día</div>
+        </div>
+        <div class="field">
+          <div class="field-label">TERMINA BIEN SI…</div>
+          <div class="field-val">La cantidad de contagiados activos llega a 0 sin haber superado los 13 contagios acumulados.</div>
+        </div>
+        <div class="field">
+          <div class="field-label">TERMINA MAL SI…</div>
+          <div class="field-val">El total de contagiados acumulados alcanza o supera las 14 personas (40% de la población).</div>
+        </div>
+        <div class="field">
+          <div class="field-label">CONTROLES</div>
+          <div class="field-val">Teclado: Teclas de acción o clicks. &nbsp;|&nbsp; Dedo: Toque táctil directo en celdas (mínimo 44px).</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-commits" class="tab-content">
+      <div class="card">
+        <h2>📌 Los 6 Commits Obligatorios</h2>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px;">
+          Ejecutá estos comandos en la terminal respetando los mensajes exactos requeridos por la consigna.
+        </p>
+        <ol class="commits-list">
+          <li>
+            <code>git commit -m "inicio: proyecto creado"</code>
+            <button class="btn-copy" onclick="copiarTexto('git commit -m \"inicio: proyecto creado\"')">Copiar</button><br>
+            <span style="font-size:12px; color:var(--text-muted)">Bloque 1 · Al crear la estructura inicial de Vite y TypeScript.</span>
+          </li>
+          <li>
+            <code>git commit -m "reglas: logica desde mi ficha"</code>
+            <button class="btn-copy" onclick="copiarTexto('git commit -m \"reglas: logica desde mi ficha\"')">Copiar</button><br>
+            <span style="font-size:12px; color:var(--text-muted)">Bloque 1 · Tras validar src/logica.ts con `npx tsc --noEmit`.</span>
+          </li>
+          <li>
+            <code>git commit -m "pruebas: reglas comprobadas"</code>
+            <button class="btn-copy" onclick="copiarTexto('git commit -m \"pruebas: reglas comprobadas\"')">Copiar</button><br>
+            <span style="font-size:12px; color:var(--text-muted)">Bloque 2 · Con los 5 unit tests en verde en test/logica.test.ts.</span>
+          </li>
+          <li>
+            <code>git commit -m "pantalla: interfaz basica"</code>
+            <button class="btn-copy" onclick="copiarTexto('git commit -m \"pantalla: interfaz basica\"')">Copiar</button><br>
+            <span style="font-size:12px; color:var(--text-muted)">Bloque 3 · Al vincular main.ts con index.html y estilo.css.</span>
+          </li>
+          <li>
+            <code>git commit -m "movil: funciona con el dedo"</code>
+            <button class="btn-copy" onclick="copiarTexto('git commit -m \"movil: funciona con el dedo\"')">Copiar</button><br>
+            <span style="font-size:12px; color:var(--text-muted)">Bloque 3 · Al asegurar targets táctiles >= 44px y diseño responsivo.</span>
+          </li>
+          <li>
+            <code>git commit -m "docs: readme y publicacion"</code>
+            <button class="btn-copy" onclick="copiarTexto('git commit -m \"docs: readme y publicacion\"')">Copiar</button><br>
+            <span style="font-size:12px; color:var(--text-muted)">Bloque 4 · Con README.md, PROMPTS.md y despliegue final publicado.</span>
+          </li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const CONFIG = {
+      FILAS: 6,
+      COLUMNAS: 6,
+      TOTAL_PERSONAS: 36,
+      MAX_AISLAMIENTOS: 5,
+      DURACION_MEDIDAS_DIAS: 3,
+      USOS_MEDIDAS_MAX: 1,
+      PROB_CONTAGIO_BASE: 0.5,
+      PROB_CONTAGIO_MEDIDAS: 0.2,
+      DIAS_DURACION_INFECCION: 3,
+      UMBRAL_CONTAGIO_MAX_PERSONAS: 14,
+      POSICION_INICIAL_FILA: 2,
+      POSICION_INICIAL_COLUMNA: 2,
+      SEMILLA_PREDETERMINADA: 12345
+    };
+
+    // Synthesized Audio Controller using Web Audio API
+    let audioHabilitado = true;
+    let audioCtx = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+    }
+
+    function playSound(tipo) {
+      if (!audioHabilitado) return;
+      try {
+        initAudio();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        const now = audioCtx.currentTime;
+        if (tipo === 'isolate') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(440, now);
+          osc.frequency.exponentialRampToValueAtTime(880, now + 0.15);
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.linearRampToValueAtTime(0, now + 0.15);
+          osc.start(now);
+          osc.stop(now + 0.15);
+        } else if (tipo === 'measures') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(300, now);
+          osc.frequency.linearRampToValueAtTime(600, now + 0.25);
+          gain.gain.setValueAtTime(0.25, now);
+          gain.gain.linearRampToValueAtTime(0, now + 0.25);
+          osc.start(now);
+          osc.stop(now + 0.25);
+        } else if (tipo === 'nextDay') {
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(220, now);
+          osc.frequency.setValueAtTime(330, now + 0.08);
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.linearRampToValueAtTime(0, now + 0.2);
+          osc.start(now);
+          osc.stop(now + 0.2);
+        } else if (tipo === 'victory') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(523.25, now);
+          osc.frequency.setValueAtTime(659.25, now + 0.12);
+          osc.frequency.setValueAtTime(783.99, now + 0.24);
+          osc.frequency.setValueAtTime(1046.50, now + 0.36);
+          gain.gain.setValueAtTime(0.3, now);
+          gain.gain.linearRampToValueAtTime(0, now + 0.6);
+          osc.start(now);
+          osc.stop(now + 0.6);
+        } else if (tipo === 'defeat') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(300, now);
+          osc.frequency.linearRampToValueAtTime(100, now + 0.5);
+          gain.gain.setValueAtTime(0.3, now);
+          gain.gain.linearRampToValueAtTime(0, now + 0.5);
+          osc.start(now);
+          osc.stop(now + 0.5);
+        }
+      } catch (e) { console.error('Audio context error', e); }
+    }
+
+    function toggleAudio() {
+      audioHabilitado = !audioHabilitado;
+      document.getElementById('sound-btn').textContent = audioHabilitado ? '🔊' : '🔇';
+    }
+
+    function crearGeneradorAzar(semilla = CONFIG.SEMILLA_PREDETERMINADA) {
+      let s = semilla >>> 0;
+      return function() {
+        s = (s + 0x6d2b79f5) | 0;
+        let t = Math.imul(s ^ (s >>> 15), 1 | s);
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    let estadoSimulacion = null;
+    let rng = crearGeneradorAzar();
+
+    function crearEstadoInicial() {
+      const grid = [];
+      let contadorId = 0;
+      for (let f = 0; f < CONFIG.FILAS; f++) {
+        const fila = [];
+        for (let c = 0; c < CONFIG.COLUMNAS; c++) {
+          const esPacienteCero = (f === CONFIG.POSICION_INICIAL_FILA && c === CONFIG.POSICION_INICIAL_COLUMNA);
+          fila.push({
+            id: contadorId++,
+            fila: f,
+            columna: c,
+            estado: esPacienteCero ? 'contagiada' : 'sana',
+            diasContagiada: esPacienteCero ? 1 : 0
+          });
+        }
+        grid.push(fila);
+      }
+      return {
+        grid,
+        diaActual: 1,
+        aislamientosRestantes: CONFIG.MAX_AISLAMIENTOS,
+        medidasUsadas: false,
+        diasMedidasRestantes: 0,
+        totalContagiadasHistorico: 1,
+        contagiadasActivas: 1,
+        estadoJuego: 'inicio'
+      };
+    }
+
+    function aislarPersona(estado, fila, columna) {
+      if (estado.estadoJuego === 'exito' || estado.estadoJuego === 'fracaso') return false;
+      if (fila < 0 || fila >= CONFIG.FILAS || columna < 0 || columna >= CONFIG.COLUMNAS) return false;
+      if (estado.aislamientosRestantes <= 0) return false;
+
+      const persona = estado.grid[fila][columna];
+      if (persona.estado !== 'sana') return false;
+
+      persona.estado = 'aislada';
+      estado.aislamientosRestantes -= 1;
+      if (estado.estadoJuego === 'inicio') estado.estadoJuego = 'jugando';
+      playSound('isolate');
+      return true;
+    }
+
+    function activarMedidas(estado) {
+      if (estado.estadoJuego === 'exito' || estado.estadoJuego === 'fracaso') return false;
+      if (estado.medidasUsadas) return false;
+
+      estado.medidasUsadas = true;
+      estado.diasMedidasRestantes = CONFIG.DURACION_MEDIDAS_DIAS;
+      if (estado.estadoJuego === 'inicio') estado.estadoJuego = 'jugando';
+      playSound('measures');
+      return true;
+    }
+
+    function obtenerVecinosOrtogonales(fila, columna) {
+      const vecinos = [];
+      const dirs = [{f:-1,c:0},{f:1,c:0},{f:0,c:-1},{f:0,c:1}];
+      for (const d of dirs) {
+        const nf = fila + d.f;
+        const nc = columna + d.c;
+        if (nf >= 0 && nf < CONFIG.FILAS && nc >= 0 && nc < CONFIG.COLUMNAS) {
+          vecinos.push({f: nf, c: nc});
+        }
+      }
+      return vecinos;
+    }
+
+    function pasarAlSiguienteDia(estado, rngFunc = rng) {
+      if (estado.estadoJuego === 'exito' || estado.estadoJuego === 'fracaso') return false;
+      if (estado.estadoJuego === 'inicio') estado.estadoJuego = 'jugando';
+
+      estado.diaActual += 1;
+      playSound('nextDay');
+
+      const prob = estado.diasMedidasRestantes > 0 ? CONFIG.PROB_CONTAGIO_MEDIDAS : CONFIG.PROB_CONTAGIO_BASE;
+
+      const contagiadosAlInicio = [];
+      for (let f = 0; f < CONFIG.FILAS; f++) {
+        for (let c = 0; c < CONFIG.COLUMNAS; c++) {
+          if (estado.grid[f][c].estado === 'contagiada') {
+            contagiadosAlInicio.push(estado.grid[f][c]);
+          }
+        }
+      }
+
+      const nuevosContagios = [];
+      for (const p of contagiadosAlInicio) {
+        const vecinos = obtenerVecinosOrtogonales(p.fila, p.columna);
+        for (const v of vecinos) {
+          if (estado.grid[v.f][v.c].estado === 'sana') {
+            if (rngFunc() < prob) nuevosContagios.push(v);
+          }
+        }
+      }
+
+      for (const coord of nuevosContagios) {
+        const p = estado.grid[coord.f][coord.c];
+        if (p.estado === 'sana') {
+          p.estado = 'contagiada';
+          p.diasContagiada = 1;
+          estado.totalContagiadasHistorico += 1;
+        }
+      }
+
+      for (const p of contagiadosAlInicio) {
+        p.diasContagiada += 1;
+        if (p.diasContagiada > CONFIG.DIAS_DURACION_INFECCION) {
+          p.estado = 'recuperada';
+        }
+      }
+
+      if (estado.diasMedidasRestantes > 0) estado.diasMedidasRestantes -= 1;
+
+      let activas = 0;
+      for (let f = 0; f < CONFIG.FILAS; f++) {
+        for (let c = 0; c < CONFIG.COLUMNAS; c++) {
+          if (estado.grid[f][c].estado === 'contagiada') activas += 1;
+        }
+      }
+      estado.contagiadasActivas = activas;
+
+      if (estado.totalContagiadasHistorico >= CONFIG.UMBRAL_CONTAGIO_MAX_PERSONAS) {
+        estado.estadoJuego = 'fracaso';
+        playSound('defeat');
+      } else if (estado.contagiadasActivas === 0) {
+        estado.estadoJuego = 'exito';
+        playSound('victory');
+      }
+      return true;
+    }
+
+    function render() {
+      if (!estadoSimulacion) return;
+
+      document.getElementById('hud-dia').textContent = estadoSimulacion.diaActual;
+      document.getElementById('hud-activas').textContent = estadoSimulacion.contagiadasActivas;
+      document.getElementById('hud-historico').textContent = `${estadoSimulacion.totalContagiadasHistorico}/${CONFIG.UMBRAL_CONTAGIO_MAX_PERSONAS}`;
+      document.getElementById('hud-aislamientos').textContent = estadoSimulacion.aislamientosRestantes;
+
+      const btnMedidas = document.getElementById('btn-medidas');
+      if (estadoSimulacion.medidasUsadas) {
+        btnMedidas.disabled = true;
+        btnMedidas.textContent = estadoSimulacion.diasMedidasRestantes > 0 
+          ? `🛡️ Activa (${estadoSimulacion.diasMedidasRestantes}d)` 
+          : `🛡️ Medidas Usadas`;
+      } else {
+        btnMedidas.disabled = false;
+        btnMedidas.textContent = `🛡️ Medidas Sanitarias (3d)`;
+      }
+
+      const banner = document.getElementById('status-banner');
+      if (estadoSimulacion.estadoJuego === 'exito') {
+        banner.className = 'banner success show';
+        banner.innerHTML = '🎉 <b>¡VICTORIA!</b> Frenaste el brote. No quedan casos activos y contuviste la epidemia.';
+      } else if (estadoSimulacion.estadoJuego === 'fracaso') {
+        banner.className = 'banner error show';
+        banner.innerHTML = '☣️ <b>¡BROTE FUERA DE CONTROL!</b> Se superó el umbral máximo de 14 contagiados.';
+      } else if (estadoSimulacion.diasMedidasRestantes > 0) {
+        banner.className = 'banner info show';
+        banner.innerHTML = `🛡️ Medidas sanitarias activas. Probabilidad de contagio reducida al 20% (${estadoSimulacion.diasMedidasRestantes} días).`;
+      } else {
+        banner.className = 'banner info show';
+        banner.innerHTML = '💡 Tocá a personas <b>Sanas (👤)</b> para aislarlas antes de que el virus se propague.';
+      }
+
+      const gridEl = document.getElementById('grid');
+      gridEl.innerHTML = '';
+
+      for (let f = 0; f < CONFIG.FILAS; f++) {
+        for (let c = 0; c < CONFIG.COLUMNAS; c++) {
+          const p = estadoSimulacion.grid[f][c];
+          const cell = document.createElement('button');
+          cell.className = `cell ${p.estado}`;
+          
+          let icon = '👤';
+          if (p.estado === 'contagiada') icon = '☣️';
+          if (p.estado === 'aislada') icon = '🛡️';
+          if (p.estado === 'recuperada') icon = '💖';
+
+          cell.innerHTML = `<span class="cell-icon">${icon}</span><span>${p.estado[0].toUpperCase()}</span>`;
+          cell.onclick = () => handleAislar(f, c);
+          gridEl.appendChild(cell);
+        }
+      }
+    }
+
+    function handleAislar(f, c) {
+      const ok = aislarPersona(estadoSimulacion, f, c);
+      if (ok) render();
+    }
+
+    function handleActivarMedidas() {
+      const ok = activarMedidas(estadoSimulacion);
+      if (ok) render();
+    }
+
+    function handleSiguienteDia() {
+      pasarAlSiguienteDia(estadoSimulacion);
+      render();
+    }
+
+    function reiniciarJuego() {
+      rng = crearGeneradorAzar();
+      estadoSimulacion = crearEstadoInicial();
+      render();
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+      document.getElementById(`tab-btn-${tabId}`).classList.add('active');
+      document.getElementById(`tab-${tabId}`).classList.add('active');
+
+      if (tabId === 'pruebas') runUnitTests();
+    }
+
+    function runUnitTests() {
+      const container = document.getElementById('tests-output');
+      container.innerHTML = '';
+
+      const tests = [
+        {
+          name: "1. El estado inicial se crea correctamente con el paciente cero en (2,2)",
+          fn: () => {
+            const e = crearEstadoInicial();
+            return e.grid[2][2].estado === 'contagiada' && 
+                   e.aislamientosRestantes === 5 && 
+                   e.contagiadasActivas === 1;
+          }
+        },
+        {
+          name: "2. Aislar a una persona sana reduce los aislamientos disponibles",
+          fn: () => {
+            const e = crearEstadoInicial();
+            const res = aislarPersona(e, 0, 0);
+            return res === true && e.grid[0][0].estado === 'aislada' && e.aislamientosRestantes === 4;
+          }
+        },
+        {
+          name: "3. No se puede aislar a una persona que ya está contagiada",
+          fn: () => {
+            const e = crearEstadoInicial();
+            const res = aislarPersona(e, 2, 2);
+            return res === false && e.aislamientosRestantes === 5;
+          }
+        },
+        {
+          name: "4. Las medidas sanitarias solo se pueden activar una vez por partida",
+          fn: () => {
+            const e = crearEstadoInicial();
+            const r1 = activarMedidas(e);
+            const r2 = activarMedidas(e);
+            return r1 === true && r2 === false && e.medidasUsadas === true;
+          }
+        },
+        {
+          name: "5. Recorrido simulado completo hasta la resolución de la epidemia",
+          fn: () => {
+            const e = crearEstadoInicial();
+            const testRng = crearGeneradorAzar(999);
+            aislarPersona(e, 2, 1);
+            aislarPersona(e, 2, 3);
+            aislarPersona(e, 1, 2);
+            aislarPersona(e, 3, 2);
+            for (let i = 0; i < 10; i++) {
+              if (e.estadoJuego !== 'jugando' && e.estadoJuego !== 'inicio') break;
+              pasarAlSiguienteDia(e, testRng);
+            }
+            return e.estadoJuego === 'exito' || e.estadoJuego === 'fracaso';
+          }
+        }
+      ];
+
+      tests.forEach(t => {
+        let pass = false;
+        try { pass = t.fn(); } catch(err) { pass = false; }
+        
+        const div = document.createElement('div');
+        div.className = `test-item ${pass ? 'pass' : 'fail'}`;
+        div.innerHTML = `<b>${pass ? '✅ PASS' : '❌ FAIL'}</b> - ${t.name}`;
+        container.appendChild(div);
+      });
+    }
+
+    function copiarTexto(texto) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(texto);
+      } else {
+        const input = document.createElement('input');
+        input.value = texto;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+      }
+    }
+
+    // Inicializar partida al cargar
+    reiniciarJuego();
+  </script>
+</body>
+</html>
